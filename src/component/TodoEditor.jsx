@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import "./TodoEditor.css";
+
+
 //화면에 리스트 추가
 const TodoEditor =({onCreate}) =>{
    const [content, setContent] = useState("");
