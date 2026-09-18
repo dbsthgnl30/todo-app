@@ -26,8 +26,7 @@ function App() {
 //useRef-리스트가 추가될때마다 기억되야 하는값으로,값이 바껴도 화면을다시그리진않는다(내가추가한리스트개수)
 
 
-//초깃값이 2인 Ref객체를 생성해 idRef에 저장
-const idRef = useRef(2);
+
 
 //[현재값,값을 바꾸는 함수] /useState(mockTodo)-처음한번만 실행됨*/
 const [list, setList] = useState(() => {
@@ -39,13 +38,20 @@ const [list, setList] = useState(() => {
   return  savedList ? JSON.parse(savedList) : mockTodo;
 });
 
+
+
+const idRef = useRef(
+  list.length > 0 ? Math.max(...list.map((it)=>it.id))+1:0
+);
+
+
 useEffect(() =>{
   //배열
   //{ id: 0, content: "React 공부하기" },
   //{ id: 1, content: "빨래 널기" }
   //글자
   //[{"id":0,"content":"React 공부하기"},{"id":1,"content":"빨래 널기"}]
-  
+
   //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장해
   localStorage.setItem("todoList",JSON.stringify(list));},[list]);
 

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import TodoItem from "./TodoItem";
 import "./TodoList.css";
 
-
+//목록을 보여줌
 const TodoList =({list,onDelete,onToggle}) =>{
+ 
     return(
      <div className="TodoList">
       <h4>Todo List 🌱</h4>
@@ -13,6 +15,6 @@ const TodoList =({list,onDelete,onToggle}) =>{
       </div>
     </div>
     );
-};
+ };
 
 export default TodoList;
