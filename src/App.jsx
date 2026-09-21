@@ -2,6 +2,7 @@ import "./App.css";
 /*Header 컴포넌트를 App의 자식으로 배치. 즉 Header */
 import Header from "./component/Header";
 import TodoEditor from "./component/TodoEditor";
+import Login from "./component/Login";
 import TodoList from "./component/TodoList";
 import { useState, useRef,useEffect } from "react";
 
@@ -28,6 +29,9 @@ function App() {
 
 
 
+
+
+const[user,setUser] =useState(null);
 //[현재값,값을 바꾸는 함수] /useState(mockTodo)-처음한번만 실행됨*/
 const [list, setList] = useState(() => {
   //데이터를 저장할땐 배열->문자열 (JSON.stringify)
@@ -55,7 +59,21 @@ useEffect(() =>{
   //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장해
   localStorage.setItem("todoList",JSON.stringify(list));},[list]);
 
+const onLogin =(loggedInUser)=>{
+  setUser(loggedInUser);
+};
+
+
+
+
 const onCreate =(content) =>{
+  const isDuplicate =list.some((it) =>it.content.includes(content));
+
+  if(isDuplicate){
+    alert("이미 추가된거지롱~!");
+    return;
+  }
+
   const newItem ={
     id : idRef.current,
     content,
@@ -81,6 +99,10 @@ const onToggle =(id)=> {
     list.map((it) =>(it.id === id ? { ...it, isDone : !it.isDone } : it))
   );
 };
+
+if(!user){
+  return<Login onLogin={onLogin}/>;
+}
 
 
   return (
