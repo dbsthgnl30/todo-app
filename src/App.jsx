@@ -5,6 +5,7 @@ import TodoEditor from "./component/TodoEditor";
 import Login from "./component/Login";
 import TodoList from "./component/TodoList";
 import { useState, useRef,useEffect } from "react";
+import { supabase } from "./supabaseClient";
 
 const mockTodo = [ 
   {
@@ -26,8 +27,9 @@ function App() {
 //useState-화면에 직접보여줘야하는값으로 ,값이 바뀌면 화면을다시그린다(화면에 보이는 리스트개수)
 //useRef-리스트가 추가될때마다 기억되야 하는값으로,값이 바껴도 화면을다시그리진않는다(내가추가한리스트개수)
 
-
+//로그인 정보를 받을 빈상자
 const[user,setUser] =useState(null);
+
 //get-가져오다, set-저장하다
 //[현재값,값을 바꾸는 함수] /useState(mockTodo)-처음한번만 실행됨*/
   //데이터를 저장할땐 배열->문자열 (JSON.stringify)
@@ -52,11 +54,24 @@ const idRef = useRef(
   //글자
   //[{"id":0,"content":"React 공부하기"},{"id":1,"content":"빨래 널기"}]
 
-  //list가 변경될때마다 자동호출
+  //(list저장용)list가 변경될때마다 자동호출
   useEffect(() =>{
   //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장
   localStorage.setItem("todoList",JSON.stringify(list));},[list]);
+  
+  //로그인상태확인용
+  useEffect(() =>{
+    supabase.auth.getSession().then(({data : {session}}) =>{
+      if(session){
+        setUser(session.user);
+      }
+    
+      });
+    
+    },[]);
 
+
+//로그인 정보를 받으면 setUser로 받음
 const onLogin =(loggedInUser)=>{
   setUser(loggedInUser);
 };
@@ -99,6 +114,8 @@ const onToggle =(id)=> {
   );
 };
 
+
+//로그인정보가없으면 로그인화면으로 리턴
 if(!user){
   return<Login onLogin={onLogin}/>;
 }

@@ -22,7 +22,7 @@ const Login =({onLogin})=>{
         if(error){
             alert("가입실패 :"+error.message);
         }else{
-            alert("성공티비!로그인고고!");
+            alert("성공!로그인!");
         }
     };
 
@@ -32,7 +32,7 @@ const Login =({onLogin})=>{
             password,
         });
         if(error) {
-            alert("실패티비:"+error.message);
+            alert("실패:"+error.message);
         }else{
             onLogin(data.user);
         }
