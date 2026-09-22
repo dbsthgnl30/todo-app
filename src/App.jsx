@@ -27,15 +27,13 @@ function App() {
 //useRef-리스트가 추가될때마다 기억되야 하는값으로,값이 바껴도 화면을다시그리진않는다(내가추가한리스트개수)
 
 
-
-
-
-
 const[user,setUser] =useState(null);
+//get-가져오다, set-저장하다
 //[현재값,값을 바꾸는 함수] /useState(mockTodo)-처음한번만 실행됨*/
-const [list, setList] = useState(() => {
   //데이터를 저장할땐 배열->문자열 (JSON.stringify)
   //데이터를 꺼내올땐 문자열->배열 (JSON.parse)
+  //컴포넌트가 처음 화면에 나타날때 딱한번만 실행
+const [list, setList] = useState(() => {
   //localStorage에서 저장된todelist 꺼내옴(문자열 상태)
   const savedList =localStorage.getItem("todoList");
   //savedList가 존재하면 → savedList를 문자열에서 배열로 변환해서 리턴하고, 존재하지 않으면 → mockTodo를 리턴
@@ -45,30 +43,30 @@ const [list, setList] = useState(() => {
 
 
 const idRef = useRef(
-  list.length > 0 ? Math.max(...list.map((it)=>it.id))+1:0
+  list.length > 0 ? Math.max(...list.map((it)=>it.id)) +1 : 0
 );
 
-
-useEffect(() =>{
   //배열
   //{ id: 0, content: "React 공부하기" },
   //{ id: 1, content: "빨래 널기" }
   //글자
   //[{"id":0,"content":"React 공부하기"},{"id":1,"content":"빨래 널기"}]
 
-  //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장해
+  //list가 변경될때마다 자동호출
+  useEffect(() =>{
+  //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장
   localStorage.setItem("todoList",JSON.stringify(list));},[list]);
 
 const onLogin =(loggedInUser)=>{
   setUser(loggedInUser);
 };
 
-
-
-
 const onCreate =(content) =>{
+  //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
+  //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
   const isDuplicate =list.some((it) =>it.content.includes(content));
-
+  
+  //값이 true 일때만 실행
   if(isDuplicate){
     alert("이미 추가된거지롱~!");
     return;
@@ -81,6 +79,7 @@ const onCreate =(content) =>{
     createdDate : new Date().getTime(),
   
   };
+  //여러 번(추가할 때마다, 삭제할 때마다) 호출
   setList([newItem,...list]);
   //idRef를 이용해 아이템 생성마다 id가 1씩 늘어나도록 수정
   idRef.current +=1;
