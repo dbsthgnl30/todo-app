@@ -14,3 +14,11 @@
   outline: none;
   border-bottom: 1px solid #1f93ff;
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
