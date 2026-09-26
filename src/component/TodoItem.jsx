@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./TodoItem.css";
 //할일하나하나,체크박스,삭제버튼
-const TodoItem=({id,content,createdDate,onDelete,onToggle,isDone}) =>{
+const TodoItem=({id,content,createdDate,onDelete,onToggle,isDone,priority}) =>{
 
   
      return(
@@ -14,7 +14,8 @@ const TodoItem=({id,content,createdDate,onDelete,onToggle,isDone}) =>{
             onChange={()=> onToggle(id)}
             />
             </div>
-              <div className="title_col">{content}</div>
+              <div className="title_col" title={content}>{content}</div>
+              {priority && <span className={`priority_badge priority_${priority}`}>{priority}</span>}
              <div className="date_col">
                 {new Date(createdDate).toLocaleString("ko-KR", {
                     year: "numeric",

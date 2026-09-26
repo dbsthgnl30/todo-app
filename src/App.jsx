@@ -6,6 +6,8 @@ import Login from "./component/Login";
 import TodoList from "./component/TodoList";
 import { useState, useRef,useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import { askAI } from "./aiHelper"; 
+
 
 const mockTodo = [ 
   {
@@ -76,10 +78,15 @@ const onLogin =(loggedInUser)=>{
   setUser(loggedInUser);
 };
 
-const onCreate =(content) =>{
+const onCreate =async(content) =>{
+  // AI한테 물어봄
+  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
+
+  const today= new Date().toDateString();
   //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
   //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
-  const isDuplicate =list.some((it) =>it.content.includes(content));
+  const isDuplicate =list.some((it) =>
+    it.content === content && new Date(it.createdDate).toDateString() === today);
   
   //값이 true 일때만 실행
   if(isDuplicate){
@@ -92,7 +99,7 @@ const onCreate =(content) =>{
     content,
     isDone : false,
     createdDate : new Date().getTime(),
-  
+    priority,
   };
   //여러 번(추가할 때마다, 삭제할 때마다) 호출
   setList([newItem,...list]);

@@ -32,3 +32,30 @@
   border-radius: 5px;
   padding: 5px;
 }
+
+.title_col {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+
+
+.priority_긴급 {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.priority_보통 {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.priority_낮음 {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
