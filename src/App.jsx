@@ -61,6 +61,7 @@ const idRef = useRef(
   //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장
   localStorage.setItem("todoList",JSON.stringify(list));},[list]);
   
+
   //로그인상태확인용
   useEffect(() =>{
     supabase.auth.getSession().then(({data : {session}}) =>{
@@ -72,11 +73,55 @@ const idRef = useRef(
     
     },[]);
 
+    useEffect(() =>{
+      const{data : authListener} = supabase.auth.onAuthStateChange(
+      (event, session) => {
+          setUser(session?.user ?? null);
+        }
+      );
+        return() =>{
+          authListener.subscription.unsubscribe();
+        }
+    },[]);
+
+
+    //일정 시간 활동 없으면 자동 로그아웃 (Idle Timeout)
+    useEffect(()=>{
+    
+    let timer;
+
+       const resetTimer=() =>{
+        clearTimeout(timer);
+        timer =setTimeout(()=> {
+          supabase.auth.signOut();
+          setUser(null);
+          alert("장시간 활동이 없어 로그아웃되었습니다.");
+        },30*60*1000); 
+       };
+
+      // 마우스 움직임, 키보드 입력 등이 있으면 타이머 리셋
+      window.addEventListener("mousemove",resetTimer);
+      window.addEventListener("keydown",resetTimer);
+      resetTimer();
+    
+    
+      return()=>{
+        clearTimeout(timer);
+        window.removeEventListener("mousemove",resetTimer);
+        window.removeEventListener("keydown",resetTimer);
+      };
+    },[]);
+    
+
 
 //로그인 정보를 받으면 setUser로 받음
 const onLogin =(loggedInUser)=>{
   setUser(loggedInUser);
 };
+
+const onLogout = async () =>{
+  await supabase.auth.signOut();
+}
 
 const onCreate =async(content) =>{
   // AI한테 물어봄
