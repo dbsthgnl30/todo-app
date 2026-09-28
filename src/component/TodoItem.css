@@ -41,6 +41,12 @@
   text-overflow: ellipsis;
 }
 
+.due_badge {
+  font-size: 12px;
+  color: #666;
+  margin: 0 8px;
+}
+
 
 
 
@@ -58,4 +64,15 @@
 .priority_낮음 {
   background-color: #dcfce7;
   color: #16a34a;
+}
+
+
+
+.checkbox_col,
+.btn_col,
+.date_col,
+.priority_badge,
+.due_badge {
+  flex-shrink: 0;       /* 줄어들지 않게 */
+  white-space: nowrap;  /* 글자가 세로로 접히지 않게 */
 }

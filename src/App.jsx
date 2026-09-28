@@ -123,15 +123,19 @@ const onLogout = async () =>{
   await supabase.auth.signOut();
 }
 
+
 const onCreate =async(content) =>{
+  
   // AI한테 물어봄
-  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
+//  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
+//aiHelper.jsx에서 content를 받아옴
+ const parsed = await askAI(content);   
 
   const today= new Date().toDateString();
   //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
   //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
   const isDuplicate =list.some((it) =>
-    it.content === content && new Date(it.createdDate).toDateString() === today);
+    it.content === parsed.content && new Date(it.createdDate).toDateString() === today);
   
   //값이 true 일때만 실행
   if(isDuplicate){
@@ -141,11 +145,14 @@ const onCreate =async(content) =>{
 
   const newItem ={
     id : idRef.current,
-    content,
+    content : parsed.content,
+    dueDate : parsed.dueDate,
+    priority : parsed.priority,
     isDone : false,
     createdDate : new Date().getTime(),
-    priority,
+    
   };
+  console.log("새 할일:", newItem);
   //여러 번(추가할 때마다, 삭제할 때마다) 호출
   setList([newItem,...list]);
   //idRef를 이용해 아이템 생성마다 id가 1씩 늘어나도록 수정
