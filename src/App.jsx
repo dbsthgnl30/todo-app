@@ -44,7 +44,7 @@ const [list, setList] = useState(() => {
   return  savedList ? JSON.parse(savedList) : mockTodo;
 });
 
-
+const [loading, setLoading] = useState(false);  
 
 const idRef = useRef(
   list.length > 0 ? Math.max(...list.map((it)=>it.id)) +1 : 0
@@ -125,38 +125,44 @@ const onLogout = async () =>{
 
 
 const onCreate =async(content) =>{
-  
-  // AI한테 물어봄
-//  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
-//aiHelper.jsx에서 content를 받아옴
- const parsed = await askAI(content);   
-
-  const today= new Date().toDateString();
-  //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
-  //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
-  const isDuplicate =list.some((it) =>
-    it.content === parsed.content && new Date(it.createdDate).toDateString() === today);
-  
-  //값이 true 일때만 실행
-  if(isDuplicate){
-    alert("이미 추가된거지롱~!");
-    return;
-  }
-
-  const newItem ={
-    id : idRef.current,
-    content : parsed.content,
-    dueDate : parsed.dueDate,
-    priority : parsed.priority,
-    isDone : false,
-    createdDate : new Date().getTime(),
+  setLoading(true);
+  try{
+        // AI한테 물어봄
+      //  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
+     
     
-  };
-  console.log("새 할일:", newItem);
-  //여러 번(추가할 때마다, 삭제할 때마다) 호출
-  setList([newItem,...list]);
-  //idRef를 이용해 아이템 생성마다 id가 1씩 늘어나도록 수정
-  idRef.current +=1;
+      //aiHelper.jsx에서 content를 받아옴
+      const parsed = await askAI(content);   
+
+        const today= new Date().toDateString();
+        //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
+        //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
+        const isDuplicate =list.some((it) =>
+          it.content === parsed.content && new Date(it.createdDate).toDateString() === today);
+        
+        //값이 true 일때만 실행
+        if(isDuplicate){
+          alert("이미 추가된거지롱~!");
+          return;
+        }
+
+        const newItem ={
+          id : idRef.current,
+          content : parsed.content,
+          dueDate : parsed.dueDate,
+          priority : parsed.priority,
+          isDone : false,
+          createdDate : new Date().getTime(),
+          
+        };
+        console.log("새 할일:", newItem);
+        //여러 번(추가할 때마다, 삭제할 때마다) 호출
+        setList([newItem,...list]);
+        //idRef를 이용해 아이템 생성마다 id가 1씩 늘어나도록 수정
+        idRef.current +=1;
+    }finally{
+      setLoading(false);
+    }
 }
 
 //list 중에서, id가 일치하지 않는 것들만 남겨서 새 목록을 만들어라
@@ -183,7 +189,7 @@ if(!user){
   return (
     <div className="App">
       <Header/>
-      <TodoEditor onCreate={onCreate}/>
+      <TodoEditor onCreate={onCreate} loading ={loading}/>
        {/*리스트를뿌려줌*/}
        <TodoList list={list}  onDelete={onDelete} onToggle={onToggle}/> 
     </div>

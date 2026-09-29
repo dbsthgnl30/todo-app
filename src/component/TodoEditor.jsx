@@ -3,7 +3,7 @@ import "./TodoEditor.css";
 
 
 //화면에 리스트 추가
-const TodoEditor =({onCreate}) =>{
+const TodoEditor =({onCreate,loading}) =>{
    const [content, setContent] = useState("");
    const inputRef = useRef();
 
@@ -13,6 +13,7 @@ const TodoEditor =({onCreate}) =>{
    };
    
    const onSubmit = ()=>{
+      if(loading) return;
       //입력창에 아무값도없으먄 커서를 띄워
       if(!content){
          inputRef.current.focus();
@@ -42,7 +43,9 @@ const TodoEditor =({onCreate}) =>{
             onKeyDown={onKeyDown}
             placeholder="새로운 Todo..."
             />
-            <button onClick={onSubmit}>추가</button>
+            <button onClick={onSubmit} disabled={loading}>
+               {loading ? "AI 분석 중..." : "추가"}
+            </button>
          </div>
       </div>
    );
