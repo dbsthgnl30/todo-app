@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 
 
 
-const Login =({onLogin})=>{
+const SignUpPage =()=>{
     const [email,setEmail] =useState("");
     const [password,setPassword] =useState("");
 
@@ -13,7 +14,7 @@ const Login =({onLogin})=>{
     //async-시간이 걸리는일이있어 미리표시 기능(이함수는 기다려야한다표시)
     //await-서버응답이 올때까지 여기서 멈춰서 기다리는 기능 
     //이메일과 비밀번호를 입력해서 가입했을때 서버로 보내서 회원가입승인여부판단
-    const onSignup =async ()=> {
+    const onSignUp =async ()=> {
         const {data,error} = await supabase.auth.signUp({
            email,
            password,     
@@ -22,26 +23,14 @@ const Login =({onLogin})=>{
         if(error){
             alert("가입실패 :"+error.message);
         }else{
-            alert("성공!로그인!");
+            alert(data.user.email + "님, 가입 성공! 로그인해주세요.");
         }
     };
 
-    const onLoginSubmit = async () => {
-        const{data,error}= await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-          console.log("로그인 시도 결과:", { data, error });   // ★ 추가
-        if(error) {
-            alert("실패:"+error.message);
-        }else{
-            onLogin(data.user);
-        }
-    }
-
+   
     return(
       <div className="Login">
-        <h2>로그인 / 회원가입</h2>
+        <h2>회원가입</h2>
 
         <input
         placeholder="이메일"
@@ -58,13 +47,14 @@ const Login =({onLogin})=>{
         onChange={(e)=>setPassword(e.target.value)}
         />
 
-        <button onClick={onLoginSubmit}>로그인</button>
-        <button onClick={onSignup}>회원가입</button>
+       
+        <button onClick={onSignUp}>회원가입</button>
+         <p>이미 계정이 있으신가요? <Link to="/login">로그인</Link></p>
       </div>
         
     );
 
 };
 
-export default Login;
+export default SignUpPage;
 

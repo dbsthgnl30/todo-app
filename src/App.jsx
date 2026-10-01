@@ -2,11 +2,13 @@ import "./App.css";
 /*Header 컴포넌트를 App의 자식으로 배치. 즉 Header */
 import Header from "./component/Header";
 import TodoEditor from "./component/TodoEditor";
-import Login from "./component/Login";
+import LoginPage from "./component/LoginPage";
+import SignUpPage from "./component/SignUpPage";
 import TodoList from "./component/TodoList";
 import { useState, useRef,useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import { askAI } from "./aiHelper"; 
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
 const mockTodo = [ 
@@ -188,7 +190,15 @@ const onToggle =(id)=> {
 
 //로그인정보가없으면 로그인화면으로 리턴
 if(!user){
-  return<Login onLogin={onLogin}/>;
+  return(
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage onLogin={onLogin} />} />
+        <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+       <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+    </BrowserRouter>
+  )
 }
 
 
