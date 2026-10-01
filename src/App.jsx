@@ -120,7 +120,13 @@ const onLogin =(loggedInUser)=>{
 };
 
 const onLogout = async () =>{
-  await supabase.auth.signOut();
+          try {
+             console.log("🔥🔥🔥 버튼눌림 🔥🔥🔥");
+        const result = await supabase.auth.signOut();
+         console.log("로그아웃 결과:", result);
+          }catch(error){
+            console.log("로그아웃 에러:", result);
+          }
 }
 
 
@@ -188,7 +194,7 @@ if(!user){
 
   return (
     <div className="App">
-      <Header/>
+      <Header onLogout={onLogout}/>
       <TodoEditor onCreate={onCreate} loading ={loading}/>
        {/*리스트를뿌려줌*/}
        <TodoList list={list}  onDelete={onDelete} onToggle={onToggle}/> 

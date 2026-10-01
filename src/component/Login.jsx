@@ -31,6 +31,7 @@ const Login =({onLogin})=>{
             email,
             password,
         });
+          console.log("로그인 시도 결과:", { data, error });   // ★ 추가
         if(error) {
             alert("실패:"+error.message);
         }else{

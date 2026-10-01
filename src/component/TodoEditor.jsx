@@ -45,7 +45,7 @@ const TodoEditor =({onCreate,loading}) =>{
             />
             <button onClick={onSubmit} disabled={loading}>
                {loading ? "AI 분석 중..." : "추가"}
-            </button>
+         </button>
          </div>
       </div>
    );
