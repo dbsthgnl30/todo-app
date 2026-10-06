@@ -1,7 +1,7 @@
 import "./Header.css";
 
 /*Header 라는 컴포넌트를만들었고*/
-const Header =({ onLogout }) =>{
+const Header =({ user, onLogout }) =>{
   
 
     /*화면에 'Header Component'라는 글자가 든 div 박스 하나가 나타난다
@@ -10,7 +10,10 @@ const Header =({ onLogout }) =>{
       return (
 
         <div className="Header">
+        <div className="user_info">
+        <span>{user?.email}</span>
         <button onClick={onLogout}>로그아웃</button> 
+        </div>
         <h3>오늘은 📅</h3> 
         <h1>{new Date().toDateString()}</h1> 
          

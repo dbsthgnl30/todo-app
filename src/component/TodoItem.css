@@ -34,12 +34,27 @@
 }
 
 .title_col {
+  /* flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; */
   flex: 1;
   min-width: 0;
+}
+
+.title_text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.due_text {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
 
 .due_badge {
   font-size: 12px;

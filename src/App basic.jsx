@@ -11,6 +11,21 @@ import { askAI } from "./aiHelper";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
+const mockTodo = [ 
+  {
+    id: 0,
+    isDone: false,
+    content: "React 공부하기",
+    createdDate: new Date().getTime(),
+  },
+  {
+    id: 1,
+    isDone: false,
+    content: "빨래 널기",
+    createdDate: new Date().getTime(),
+  },
+];
+
 function App() {
 
 //useState-화면에 직접보여줘야하는값으로 ,값이 바뀌면 화면을다시그린다(화면에 보이는 리스트개수)
@@ -19,11 +34,23 @@ function App() {
 //로그인 정보를 받을 빈상자
 const[user,setUser] =useState(null);
 
-
-const [list, setList] = useState([]);
+//get-가져오다, set-저장하다
+//[현재값,값을 바꾸는 함수] /useState(mockTodo)-처음한번만 실행됨*/
+  //데이터를 저장할땐 배열->문자열 (JSON.stringify)
+  //데이터를 꺼내올땐 문자열->배열 (JSON.parse)
+  //컴포넌트가 처음 화면에 나타날때 딱한번만 실행
+const [list, setList] = useState(() => {
+  //localStorage에서 저장된todelist 꺼내옴(문자열 상태)
+  const savedList =localStorage.getItem("todoList");
+  //savedList가 존재하면 → savedList를 문자열에서 배열로 변환해서 리턴하고, 존재하지 않으면 → mockTodo를 리턴
+  return  savedList ? JSON.parse(savedList) : mockTodo;
+});
 
 const [loading, setLoading] = useState(false);  
 
+const idRef = useRef(
+  list.length > 0 ? Math.max(...list.map((it)=>it.id)) +1 : 0
+);
 
   //배열
   //{ id: 0, content: "React 공부하기" },
@@ -33,46 +60,24 @@ const [loading, setLoading] = useState(false);
 
   //(list저장용)list가 변경될때마다 자동호출
   useEffect(() =>{
-
-    if(!user) return;
-
-    const fetchTodos = async () => { // ① 함수를 "정의"만 함 (아직 실행 안 됨)
-      const {data,error} = await supabase
-      .from ('todos')                         //todo테이블에서
-      .select('*')                            //모든컬럼을 가져오는데
-      .eq('user_id',user.id)                  //user_id가 사용자 id랑 같은거만
-      .order('created_at',{ascending: false}); //최신순으로 정렬(내림차순)
-
-
-      if(error){
-        console.log("할일불러오기 실패 :",error);
-      }else{
-          console.log("불러온 데이터:", data);
-        setList(data);
-      }
-    };
-
-    fetchTodos();  // ② 이제 그 함수를 "실행"함
-  },[user]);//user가 바뀔때마다 (로그인할 때마다) 다시불러옴
+  //[list]가 바뀔때마다(추가,삭제) 그배열을 문자자열로 바꿔서[JSON.stringify(list)] todoList라는 이름으로 localStorage애 저장
+  localStorage.setItem("todoList",JSON.stringify(list));},[list]);
   
 
-  //새로고침 시 저장된 세션이 있는지 읽어서 usser에 넣어줌
-  // useEffect(() =>{
-  //   supabase.auth.getSession().then(({data : {session}}) =>{
-  //     if(session){
-  //       setUser(session.user);
-  //     }
+  //로그인상태확인용
+  useEffect(() =>{
+    supabase.auth.getSession().then(({data : {session}}) =>{
+      if(session){
+        setUser(session.user);
+      }
     
-  //     });
+      });
     
-  //   },[]);
-    //로그인,로그아웃,토근갱신 시 user업데이트
+    },[]);
+
     useEffect(() =>{
-      //auth-로그인에 관한 기능 모아놓음
-      //on+auth+state+change -로그인상태가 바뀔 때
       const{data : authListener} = supabase.auth.onAuthStateChange(
-      
-        (event, session) => {
+      (event, session) => {
           setUser(session?.user ?? null);
         }
       );
@@ -122,7 +127,7 @@ const onLogout = async () =>{
         const result = await supabase.auth.signOut();
          console.log("로그아웃 결과:", result);
           }catch(error){
-            console.log("로그아웃 에러:", error);
+            console.log("로그아웃 에러:", result);
           }
 }
 
@@ -141,71 +146,46 @@ const onCreate =async(content) =>{
         //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
         //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
         const isDuplicate =list.some((it) =>
-          it.content === parsed.content && new Date(it.created_date).toDateString() === today);
+          it.content === parsed.content && new Date(it.createdDate).toDateString() === today);
         
         //값이 true 일때만 실행
         if(isDuplicate){
           alert("이미 추가된거지롱~!");
           return;
         }
-        console.log("파싱 결과:", parsed);
-        const {data,error} = await supabase
-        .from('todos')
-        
-        .insert ({
-          //*DB컬럼이름(소문자) : ai가 준 객체 안의 이름(대문자)
-          user_id : user.id,
-          content :parsed.content,
-          due_date : parsed.due_date,
-          due_time : parsed.due_time,
-          priority : parsed.priority,
-          is_done: false,
-        })
-        .select();//저장 후 결과를 돌려받기 위해 필요
 
-        console.log("이번 data:", data); 
-        if(error){
-          alert("저장실패 : " + error.message);
-          return;
-        }
+        const newItem ={
+          id : idRef.current,
+          content : parsed.content,
+          dueDate : parsed.dueDate,
+          priority : parsed.priority,
+          isDone : false,
+          createdDate : new Date().getTime(),
+          
+        };
+        console.log("새 할일:", newItem);
         //여러 번(추가할 때마다, 삭제할 때마다) 호출
-        setList([data[0],...list]);
-        
+        setList([newItem,...list]);
+        //idRef를 이용해 아이템 생성마다 id가 1씩 늘어나도록 수정
+        idRef.current +=1;
     }finally{
       setLoading(false);
     }
 }
 
 //list 중에서, id가 일치하지 않는 것들만 남겨서 새 목록을 만들어라
-const onDelete =async(id) =>{
-  const {error} = await supabase.from('todos').delete().eq('id',id);
-  if(error){
-     alert("삭제 실패: " + error.message);
-     return;
-  }
-    setList(list.filter((it) => it.id !== id));
+const onDelete =(id) =>{
+  setList(list.filter((it) => it.id !==id));
 };
 
 
-const onToggle =async(id)=> {
-  const target = list.find((it) => it.id ===id);
-  const {error} = await supabase
-    .from('todos')
-    .update({is_done :!target.is_done })
-    .eq('id',id);
-  
-    if(error){
-      alert("수정 실패: " + error.message);
-    return;
-  }
-
+const onToggle =(id)=> {
   setList(
     //map-배열안에있는걸 하나씩 다꺼내서,각각원하는걸로 바꾼다음 새 배열로만들어줘
     //1번 id 체크박스를 체크하고싶다 가정하면 리스트 돌면서 1번 id가 맞으면 isdone을 false나 true 로 바꾸고 아니면 맨끝에 it 으로 가서 반환한다
-    list.map((it) =>(it.id === id ? { ...it, is_done : !it.is_done } : it))
+    list.map((it) =>(it.id === id ? { ...it, isDone : !it.isDone } : it))
   );
 };
-
 
 
 //로그인정보가없으면 로그인화면으로 리턴
@@ -224,7 +204,7 @@ if(!user){
 
   return (
     <div className="App">
-      <Header user={user} onLogout={onLogout}/>
+      <Header onLogout={onLogout}/>
       <TodoEditor onCreate={onCreate} loading ={loading}/>
        {/*리스트를뿌려줌*/}
        <TodoList list={list}  onDelete={onDelete} onToggle={onToggle}/> 

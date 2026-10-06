@@ -46,6 +46,7 @@ const TodoList =({list,onDelete,onToggle}) =>{
         onChange={onchangeSearch}
        />
       <div className="list_wrapper">
+        {/* 지금 페이지의 할일들을 하나씩 꺼내서, 각각에 대해 TodoItem을 만들어요. 할일의 모든 칸과 삭제, 체크 함수를 같이 넘겨줘요.*/}
         {pagedResult.map((it)=>(<TodoItem key ={it.id} {...it} onDelete={onDelete} onToggle={onToggle}/>
         ))}
       </div>
