@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./TodoItem.css";
 //할일하나하나,체크박스,삭제버튼
-const TodoItem=({id,content,created_at,onDelete,onToggle,is_done,priority,due_date,due_time}) =>{
+const TodoItem=({id,content,created_at,onDelete,onToggle,is_done,priority,due_date,due_time,onToggleHandover,is_handover}) =>{
 
   
      return(
@@ -32,6 +32,12 @@ const TodoItem=({id,content,created_at,onDelete,onToggle,is_done,priority,due_da
 })}
              </div>
             <div className="btn_col"> 
+              <button
+              className = {is_handover? "handover_btn_on" : "handover_btn"}
+              onClick={() => onToggleHandover(id)}
+              >
+                {is_handover ? "📌 전달" : "전달"}
+              </button>
                  {/* 화면을 읽을때마다 삭제기능이 실행되기때문에
                   ()=> onDelete(id) 이렇게씀으로써 클릭했을때만 실행되게 함*/}
                 <button onClick={()=> onDelete(id)}>삭제</button>

@@ -16,3 +16,18 @@ export const askAI = async (content) => {
 
   return data;
 };
+
+// 할일 목록을 서버(handover)에 보내고, 인수인계 메모를 돌려받는 함수
+export const askHandover = async(todos)=>{
+  
+  const { data, error } = await supabase.functions.invoke("handover", {
+    body: { todos },
+  });
+
+    if (error) {
+      console.log("인수인계 메모 실패:", error);
+      return null;
+    }
+
+    return data.memo;
+  };

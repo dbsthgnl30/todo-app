@@ -91,3 +91,8 @@
   flex-shrink: 0;       /* 줄어들지 않게 */
   white-space: nowrap;  /* 글자가 세로로 접히지 않게 */
 }
+
+.handover_btn.on {
+  background-color: #ffe08a;
+  font-weight: bold;
+}

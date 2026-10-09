@@ -6,7 +6,7 @@ import "./TodoList.css";
 const ITEM_PER_PAGE=5;
 
 //목록을 보여줌,검색기능,페이징기능
-const TodoList =({list,onDelete,onToggle}) =>{
+const TodoList =({list,onDelete,onToggle,onToggleHandover}) =>{
   const [search, setSearch]=useState("");
   const [page,setPage]=useState(1);//
 
@@ -47,7 +47,7 @@ const TodoList =({list,onDelete,onToggle}) =>{
        />
       <div className="list_wrapper">
         {/* 지금 페이지의 할일들을 하나씩 꺼내서, 각각에 대해 TodoItem을 만들어요. 할일의 모든 칸과 삭제, 체크 함수를 같이 넘겨줘요.*/}
-        {pagedResult.map((it)=>(<TodoItem key ={it.id} {...it} onDelete={onDelete} onToggle={onToggle}/>
+        {pagedResult.map((it)=>(<TodoItem key ={it.id} {...it} onDelete={onDelete} onToggle={onToggle}  onToggleHandover={onToggleHandover} />
         ))}
       </div>
 

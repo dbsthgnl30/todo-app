@@ -12,8 +12,11 @@ const TodoEditor =({onCreate,loading}) =>{
       setContent(e.target.value);
    };
    
+
+   //추가버튼클락시
    const onSubmit = ()=>{
       if(loading) return;
+
       //입력창에 아무값도없으먄 커서를 띄워
       if(!content){
          inputRef.current.focus();

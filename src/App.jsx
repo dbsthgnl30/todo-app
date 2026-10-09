@@ -5,9 +5,9 @@ import TodoEditor from "./component/TodoEditor";
 import LoginPage from "./component/LoginPage";
 import SignUpPage from "./component/SignUpPage";
 import TodoList from "./component/TodoList";
-import { useState, useRef,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { askAI } from "./aiHelper"; 
+import { askAI ,askHandover} from "./aiHelper"; 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
@@ -22,7 +22,13 @@ const[user,setUser] =useState(null);
 
 const [list, setList] = useState([]);
 
-const [loading, setLoading] = useState(false);  
+const [loading, setLoading] = useState(false);
+
+const [memo, setMemo] = useState(false);// 만들어진 인수인계 메모
+
+const [handoverLoading, setHandoverLoading] = useState(false);// 메모 작성 중인지
+
+
 
 
   //배열
@@ -32,6 +38,36 @@ const [loading, setLoading] = useState(false);
   //[{"id":0,"content":"React 공부하기"},{"id":1,"content":"빨래 널기"}]
 
   //(list저장용)list가 변경될때마다 자동호출
+
+
+  //새로고침 시 저장된 세션이 있는지 읽어서 usser에 넣어줌
+  // useEffect(() =>{
+  //   supabase.auth.getSession().then(({data : {session}}) =>{
+  //     if(session){
+  //       setUser(session.user);
+  //     }
+    
+  //     });
+    
+  //   },[]);
+
+    //로그인,로그아웃,토근갱신 시 user업데이트
+    useEffect(() =>{
+      //auth-로그인에 관한 기능 모아놓음
+      //on+auth+state+change -로그인상태가 바뀔 때
+      const{data : authListener} = supabase.auth.onAuthStateChange(
+      
+        (event, session) => {
+          setUser(session?.user ?? null);
+        }
+      );
+        return() =>{
+          authListener.subscription.unsubscribe();
+        }
+    },[]);
+
+
+
   useEffect(() =>{
 
     if(!user) return;
@@ -56,30 +92,7 @@ const [loading, setLoading] = useState(false);
   },[user]);//user가 바뀔때마다 (로그인할 때마다) 다시불러옴
   
 
-  //새로고침 시 저장된 세션이 있는지 읽어서 usser에 넣어줌
-  // useEffect(() =>{
-  //   supabase.auth.getSession().then(({data : {session}}) =>{
-  //     if(session){
-  //       setUser(session.user);
-  //     }
-    
-  //     });
-    
-  //   },[]);
-    //로그인,로그아웃,토근갱신 시 user업데이트
-    useEffect(() =>{
-      //auth-로그인에 관한 기능 모아놓음
-      //on+auth+state+change -로그인상태가 바뀔 때
-      const{data : authListener} = supabase.auth.onAuthStateChange(
-      
-        (event, session) => {
-          setUser(session?.user ?? null);
-        }
-      );
-        return() =>{
-          authListener.subscription.unsubscribe();
-        }
-    },[]);
+
 
 
     //일정 시간 활동 없으면 자동 로그아웃 (Idle Timeout)
@@ -141,7 +154,7 @@ const onCreate =async(content) =>{
         //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
         //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
         const isDuplicate =list.some((it) =>
-          it.content === parsed.content && new Date(it.created_date).toDateString() === today);
+          it.content === parsed.content && new Date(it.created_at).toDateString() === today);
         
         //값이 true 일때만 실행
         if(isDuplicate){
@@ -207,6 +220,59 @@ const onToggle =async(id)=> {
 };
 
 
+  const onToggleHandover= async(id)=>{
+    const target = list.find((it)=>it.id ===id );
+
+    //db 업데이트
+    const {error} =await supabase
+    .from('todos')
+    .update({is_handover : !target.is_handover})
+    .eq('id',id);
+
+   if(error){
+      alert("수정 실패: " + error.message);
+    return;
+
+  }
+    //화면 수정 업데이트
+    setList(
+      list.map((it) => (it.id === id ? { ...it, is_handover: !it.is_handover } : it))
+    );
+
+  };
+
+
+  // 교대 버튼: 전달사항 + 미완료 할일을 모아서 AI한테 메모로 정리시킴
+  const onHandover = async () => {
+    const targets =list.filter((it) =>it.is_handover || !it.is_done);
+
+    if(targets.length === 0){
+      alert("전달할 내용이 없어요.");
+    return;
+    }
+
+    setHandoverLoading(true);
+    try{
+      const result = await askHandover(targets);
+      if(!result){
+        alert("메모생성에 실패했어요.");
+        return;
+      }
+        setMemo(result);
+      }finally{
+        setHandoverLoading(false);
+      }
+    };
+
+
+    // 메모를 클립보드에 복사
+    const onCopyMemo = async () => {
+      await navigator.clipboard.writeText(memo);
+      alert("복사됐어요. 카톡에 붙여넣으세요.");
+    };
+
+
+
 
 //로그인정보가없으면 로그인화면으로 리턴
 if(!user){
@@ -224,10 +290,20 @@ if(!user){
 
   return (
     <div className="App">
-      <Header user={user} onLogout={onLogout}/>
-      <TodoEditor onCreate={onCreate} loading ={loading}/>
-       {/*리스트를뿌려줌*/}
-       <TodoList list={list}  onDelete={onDelete} onToggle={onToggle}/> 
+      <Header user={user} onLogout={onLogout}/>   {/* 1. 맨 위: 헤더 */}
+      <TodoEditor onCreate={onCreate} loading ={loading}/>    {/* 2. 할일 입력창 */}
+      <div className="APP">  {/* 3. 교대 버튼과 메모 */}
+       <button onClick ={onHandover} disabled={handoverLoading}>
+          {handoverLoading ? "메모 작성 중..." : "🔄 교대 인수인계"}
+      </button>
+        {memo && (
+          <div>
+            <pre className="handover_memo">{memo}</pre>
+            <button onClick={onCopyMemo}>복사</button>
+          </div>
+        )}
+      </div>
+       <TodoList list={list}  onDelete={onDelete} onToggle={onToggle} onToggleHandover={onToggleHandover} />     {/* 4. 할일 목록 */}
     </div>
   );
 }
