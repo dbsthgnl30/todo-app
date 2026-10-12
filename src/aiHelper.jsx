@@ -1,5 +1,3 @@
-import { supabase } from "./supabaseClient";
-
 // 이 함수는 "content"라는 할일 텍스트를 받아서
 // Supabase Edge Function(ask-ai)한테 보내고, 분류 결과를 돌려주는 함수예요
 export const askAI = async (content) => {
@@ -21,14 +19,16 @@ export const askAI = async (content) => {
 // 할일 목록을 서버(handover)에 보내고, 인수인계 메모를 돌s려받는 함수
 export const askHandover = async(todos)=>{
   
-  const { data, error } = await supabase.functions.invoke("handover", {
-    body: { todos },
-  });
-
-    if (error) {
+  try{
+       const res =await fetch("/api/ask-handover",{
+        method : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ todos }),
+       });
+       const data = await res.json();
+       return data.memo;
+    }catch(error){
       console.log("인수인계 메모 실패:", error);
       return null;
     }
-
-    return data.memo;
   };
