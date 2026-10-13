@@ -1,9 +1,10 @@
 
 import os
 import json
+import httpx
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from fastapi import FastAPI
+from fastapi import FastAPI,Header, HTTPException, Depends
 from pydantic import BaseModel  
 from dotenv import load_dotenv  
 from anthropic import Anthropic 
@@ -12,6 +13,30 @@ from anthropic import Anthropic
 load_dotenv("backend/.env")     
 #읽어온 것 중에 키를 꺼내서 그 키로 claude와 통신할 준비를 함                            
 client = Anthropic(api_key=os.environ.get("CLAUDE_API_KEY")) 
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+
+
+# 회원카드(토큰)가 진짜인지 Supabase에 물어보는 함수
+def check_login(authorization: str | None = Header(default=None)):
+    # 카드가 아예 없으면 거절
+    if not authorization:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다")
+
+    # Supabase에 "이 카드 주인이 누구야?" 하고 물어봄
+    res = httpx.get(
+        SUPABASE_URL + "/auth/v1/user",
+        headers={"apikey": SUPABASE_ANON_KEY, "Authorization": authorization},
+    )
+
+    # Supabase가 모른다고 하면 거절
+    if res.status_code != 200:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다")
+
+    # 진짜면 그 사람 정보를 돌려줌
+    return res.json()
+
+
 
 app =FastAPI()
 
@@ -46,7 +71,9 @@ class AskAiRequest(BaseModel):
 #api/ask-ai 주소로 POST 요청이 오면, 
 # 그 req를 토대로 return 값을 돌려준다.
 @app.post("/api/ask-ai")
-def ask_ai(req:AskAiRequest):
+def ask_ai(req:AskAiRequest,  user: dict = Depends(check_login)):
+
+    print("로그인한 사람:", user["email"]) 
 
     today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
     prompt = ASK_RULES + "\n오늘 날짜: " + today + "\n할일: " + req.content
@@ -90,7 +117,7 @@ class HandoverRequest(BaseModel):
         todos: list[Todo]
 
 @app.post("/api/ask-handover")
-def handover(req : HandoverRequest):
+def handover(req : HandoverRequest, user: dict = Depends(check_login)):
     today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
 
      # 할일 목록을 Claude가 읽기 좋은 글자로 바꿈
