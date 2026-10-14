@@ -40,9 +40,11 @@ def check_login(authorization: str | None = Header(default=None)):
 
 app =FastAPI()
 
-ASK_RULES = """다음 할일 텍스트를 분석해서 JSON으로만 답해. 다른 설명은 붙이지 마.
+ASK_RULES = """다음 할일 텍스트를 분석해서 JSON 배열로만 답해. 다른 설명은 붙이지 마.
 
-규칙:
+할일이 여러 개면 각각 나눠서 배열에 넣어. 할일이 하나여도 배열로 답해.
+
+각 할일의 규칙:
 - content: 날짜/시간 표현을 뺀 진짜 할일 내용만
 - due_date: "YYYY-MM-DD" 형식. 날짜 언급이 없으면 null. 시간만 있고 날짜가 없으면 오늘 날짜
 - due_time: "HH:MM" 24시간 형식. 시간 언급이 없으면 null. 오전/오후 표시가 없으면 자연스러운 쪽으로 판단 (예: 병원 3시는 15:00)
@@ -51,7 +53,7 @@ ASK_RULES = """다음 할일 텍스트를 분석해서 JSON으로만 답해. 다
   - 보통: 이번 주 안에 하면 되는 일
   - 낮음: 날짜 언급 없고 집안일/취미처럼 미뤄도 되는 일
 
-형식: {"content": "...", "due_date": "YYYY-MM-DD" 또는 null, "due_time": "HH:MM" 또는 null, "priority": "긴급" 또는 "보통" 또는 "낮음"}
+형식: [{"content": "...", "due_date": "YYYY-MM-DD" 또는 null, "due_time": "HH:MM" 또는 null, "priority": "긴급" 또는 "보통" 또는 "낮음"}]
 """
 
 
@@ -86,9 +88,8 @@ def ask_ai(req:AskAiRequest,  user: dict = Depends(check_login)):
 
     text = message.content[0].text
     text = text.replace("```json", "").replace("```", "").strip()
-    return json.loads(text)
-
-
+    print("AI 결과:", text)
+    return {"todos": json.loads(text)} 
 
 HANDOVER_RULES = """너는 교대 근무 인수인계 메모를 작성하는 도우미야. 아래 할일 목록을 다음 근무자가 바로 이해할 수 있는 인수인계 메모로 정리해.
 

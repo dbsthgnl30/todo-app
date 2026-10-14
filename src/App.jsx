@@ -140,54 +140,101 @@ const onLogout = async () =>{
 }
 
 
-const onCreate =async(content) =>{
-  setLoading(true);
-  try{
-        // AI한테 물어봄
-      //  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
+// const onCreate =async(content) =>{
+//   setLoading(true);
+//   try{
+//         // AI한테 물어봄
+//       //  const priority = await askAI(content, import.meta.env.VITE_CLAUDE_API_KEY);
      
     
-      //aiHelper.jsx에서 content를 받아옴
-      const parsed = await askAI(content);   
+//       //aiHelper.jsx에서 content를 받아옴
+//       const parsed = await askAI(content);   
 
-        const today= new Date().toDateString();
-        //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
-        //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
-        const isDuplicate =list.some((it) =>
-          it.content === parsed.content && new Date(it.created_at).toDateString() === today);
+//         const today= new Date().toDateString();
+//         //some-조건에 맞는게 하나라도있는지 확인해서 true,false 반환
+//         //이미 리스트에 있는 기존할일 it 데이터와 새로 추가된 content와 비교
+//         const isDuplicate =list.some((it) =>
+//           it.content === parsed.content && new Date(it.created_at).toDateString() === today);
         
-        //값이 true 일때만 실행
-        if(isDuplicate){
-          alert("이미 추가된거지롱~!");
-          return;
-        }
-        console.log("파싱 결과:", parsed);
-        const {data,error} = await supabase
-        .from('todos')
+//         //값이 true 일때만 실행
+//         if(isDuplicate){
+//           alert("이미 추가된거지롱~!");
+//           return;
+//         }
+//         console.log("파싱 결과:", parsed);
+//         const {data,error} = await supabase
+//         .from('todos')
         
-        .insert ({
-          //*DB컬럼이름(소문자) : ai가 준 객체 안의 이름(대문자)
-          user_id : user.id,
-          content :parsed.content,
-          due_date : parsed.due_date,
-          due_time : parsed.due_time,
-          priority : parsed.priority,
-          is_done: false,
-        })
-        .select();//저장 후 결과를 돌려받기 위해 필요
+//         .insert ({
+//           //*DB컬럼이름(소문자) : ai가 준 객체 안의 이름(대문자)
+//           user_id : user.id,
+//           content :parsed.content,
+//           due_date : parsed.due_date,
+//           due_time : parsed.due_time,
+//           priority : parsed.priority,
+//           is_done: false,
+//         })
+//         .select();//저장 후 결과를 돌려받기 위해 필요
 
-        console.log("이번 data:", data); 
-        if(error){
-          alert("저장실패 : " + error.message);
-          return;
-        }
-        //여러 번(추가할 때마다, 삭제할 때마다) 호출
-        setList([data[0],...list]);
+//         console.log("이번 data:", data); 
+//         if(error){
+//           alert("저장실패 : " + error.message);
+//           return;
+//         }
+//         //여러 번(추가할 때마다, 삭제할 때마다) 호출
+//         setList([data[0],...list]);
         
-    }finally{
-      setLoading(false);
+//     }finally{
+//       setLoading(false);
+//     }
+// }
+
+
+const onCreate = async (content) => {
+  setLoading(true);
+  try {
+    // AI가 나눠 준 할일 목록
+    const parsedList = await askAI(content);
+
+    // 오늘 이미 추가한 할일은 빼기
+    const today = new Date().toDateString();
+    const newTodos = parsedList.filter((parsed) =>
+      !list.some((it) =>it.content === parsed.content && new Date(it.created_at).toDateString() === today)
+    );
+
+    if (newTodos.length === 0) {
+      alert("이미 추가된거지롱~!");
+      return;
     }
-}
+
+    // 여러 개를 한 번에 DB에 저장
+    const { data, error } = await supabase
+      .from("todos")
+      .insert(
+        newTodos.map((parsed) => ({
+          user_id: user.id,
+          content: parsed.content,
+          due_date: parsed.due_date,
+          due_time: parsed.due_time,
+          priority: parsed.priority,
+          is_done: false,
+        }))
+      )
+      .select();
+
+    if (error) {
+      alert("저장실패 : " + error.message);
+      return;
+    }
+
+    setList([...data, ...list]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
 //list 중에서, id가 일치하지 않는 것들만 남겨서 새 목록을 만들어라
 const onDelete =async(id) =>{

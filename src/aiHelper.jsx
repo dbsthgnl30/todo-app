@@ -24,7 +24,7 @@ api.interceptors.request.use(async(config)=>{
 export const askAI = async (content) => {
     try{
        const res =await api.post("/api/ask-ai",{content});
-        return res.json();
+        return  res.data.todos;  
     }catch(error){
       console.log("AI 호출 실패:",error);
       return { content, due_date: null, due_time: null, priority: "보통" };
