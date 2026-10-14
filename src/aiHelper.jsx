@@ -43,3 +43,15 @@ export const askHandover = async(todos)=>{
       return null;
     }
   };
+
+
+  // 최근 할일 목록을 보내고, 주간 요약을 받는 함수
+export const askWeeklySummary = async (todos) => {
+  try {
+    const res = await api.post("/api/weekly-summary", { todos });
+    return res.data.summary;
+  } catch (error) {
+    console.log("주간 요약 실패:", error);
+    return null;
+  }
+};

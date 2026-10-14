@@ -7,7 +7,7 @@ import SignUpPage from "./component/SignUpPage";
 import TodoList from "./component/TodoList";
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { askAI ,askHandover} from "./aiHelper"; 
+import { askAI ,askHandover,askWeeklySummary} from "./aiHelper"; 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
@@ -28,7 +28,9 @@ const [memo, setMemo] = useState(false);// 만들어진 인수인계 메모
 
 const [handoverLoading, setHandoverLoading] = useState(false);// 메모 작성 중인지
 
+const [summary, setSummary] = useState("");                 // 만들어진 주간 요약
 
+const [summaryLoading, setSummaryLoading] = useState(false); // 요약 만드는 중인지
 
 
   //배열
@@ -312,6 +314,32 @@ const onToggle =async(id)=> {
     };
 
 
+      // 주간 요약 버튼: 최근 7일 할일을 AI한테 보내서 요약받음
+  const onSummary = async () => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const weekTodos = list.filter((it) => new Date(it.created_at) >= weekAgo);
+
+    if (weekTodos.length === 0) {
+      alert("최근 7일 동안 추가한 할일이 없어요.");
+      return;
+    }
+
+    setSummaryLoading(true);
+    try {
+      const result = await askWeeklySummary(weekTodos);
+      if (!result) {
+        alert("요약 생성에 실패했어요.");
+        return;
+      }
+      setSummary(result);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+
     // 메모를 클립보드에 복사
     const onCopyMemo = async () => {
       await navigator.clipboard.writeText(memo);
@@ -350,6 +378,12 @@ if(!user){
           </div>
         )}
       </div>
+      <div>
+        <button onClick={onSummary} disabled={summaryLoading}>
+          {summaryLoading ? "요약 중..." : "📊 주간 요약"}
+        </button>
+        {summary && <pre className="handover_memo">{summary}</pre>}
+    </div>
        <TodoList list={list}  onDelete={onDelete} onToggle={onToggle} onToggleHandover={onToggleHandover} />     {/* 4. 할일 목록 */}
     </div>
   );
