@@ -124,7 +124,6 @@ def ask_ai(req:AskAiRequest,  user: dict = Depends(check_login)):
             messages=[{"role": "user", "content": prompt}],
         )
         text = message.content[0].text
-        text = "네! 분석 결과입니다.\n" + text
     except Exception as error:
         print("Claude 호출 실패:", error)
         text = ""
