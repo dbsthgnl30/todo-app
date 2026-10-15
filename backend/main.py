@@ -65,6 +65,43 @@ def health() :
     return{"status":"ok"}
 
 
+ALLOWED_PRIORITY = ["긴급", "보통", "낮음"]
+
+
+# Claude 답을 검사해서, 이상하면 고치거나 기본값으로 바꾸는 함수
+def parse_todos(text, content):
+    fallback = [{"content": content, "due_date": None, "due_time": None, "priority": "보통"}]
+
+    # 1. [ 부터 ] 까지만 잘라서 읽기
+    try:
+        start = text.find("[")
+        end = text.rfind("]")
+        if start == -1 or end == -1:
+            return fallback
+        todos = json.loads(text[start:end + 1])
+    except Exception as error:
+        print("AI 결과 읽기 실패:", error)
+        return fallback
+
+    # 2. 할일 하나씩 검사
+    result = []
+    for t in todos:
+        if not isinstance(t, dict) or not t.get("content"):
+            continue  # 모양이 이상하거나 내용이 없으면 버림
+        priority = t.get("priority")
+        if priority not in ALLOWED_PRIORITY:
+            priority = "보통"  # 정해진 값이 아니면 보통으로
+        result.append({
+            "content": t["content"],
+            "due_date": t.get("due_date"),
+            "due_time": t.get("due_time"),
+            "priority": priority,
+        })
+
+    # 3. 남은 게 하나도 없으면 기본값
+    return result or fallback
+
+
 
 #프론트애서 보낸 content값을 AskAiRequest가 받음
 class AskAiRequest(BaseModel):
@@ -80,16 +117,21 @@ def ask_ai(req:AskAiRequest,  user: dict = Depends(check_login)):
     today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
     prompt = ASK_RULES + "\n오늘 날짜: " + today + "\n할일: " + req.content
 
-    message = client.messages.create(
-    model="claude-sonnet-4-6",
-        max_tokens=200,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = message.content[0].text
+        text = "네! 분석 결과입니다.\n" + text
+    except Exception as error:
+        print("Claude 호출 실패:", error)
+        text = ""
 
-    text = message.content[0].text
-    text = text.replace("```json", "").replace("```", "").strip()
     print("AI 결과:", text)
-    return {"todos": json.loads(text)} 
+    return {"todos": parse_todos(text, req.content)}
+    
 
 HANDOVER_RULES = """너는 교대 근무 인수인계 메모를 작성하는 도우미야. 아래 할일 목록을 다음 근무자가 바로 이해할 수 있는 인수인계 메모로 정리해.
 
